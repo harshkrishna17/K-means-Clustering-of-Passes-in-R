@@ -12,9 +12,9 @@ library(cowplot)
 library(StatsBombR)
 
 #' Data Manipulation :-
-#' 1. Calculating Progressive passes
-#' 2. Filtering
-#' 3. Selecting specific columns
+#' 1. Pulling the data from a specific competition
+#' 2. Calculating Progressive passes
+#' 3. Filtering and selecting specific columns
 
 dataframe <- FreeCompetitions() %>%
   filter(competition_id == 37 & season_name == "2020/2021")
@@ -43,7 +43,8 @@ data1 <- data1[, c("location.x", "location.y", "pass.end_location.x", "pass.end_
 
 #' Using the elbow method to find optimal number of clusters for k-means.
 #' The point on the x-axis where the sharp bend in the plot occurs shows the optimal 
-#' number of plots.
+#' number of clusters. If the correct nukber of clusters aren't selected then the 
+#' result of the model would be incorrect (eg. number of passes in cluster 2 > number of passes in cluster 1).
 
 wssplot <- function(data, nc=15, seed=1234){
   wss <- (nrow(data)-1)*sum(apply(data,2,var))
@@ -76,8 +77,9 @@ theme_custom <- function(){
     theme(plot.title = element_text(colour = "white", size = 20, face = "bold", hjust = 0.5),
           plot.subtitle = element_text(colour = "#2171b5", size = 15, hjust = 0.5))
 }
-#' Plotting. The cluster with the most number of passes is to be labelled 
-#' cluster 1 and so on. The following parts shall demonstrate two methods of plotting
+
+#' Plotting 
+#' The following parts shall demonstrate two designs of plots
 #' inspired by different people.
 #'  
 #' Method 1. Inspired by @amonizfootball
@@ -174,6 +176,11 @@ df1 <- df1 %>%
   mutate(endX = mean(pass.end_location.x)) %>%
   mutate(endY = mean(pass.end_location.y))
 
+x1 <- df1$X
+y1 <- df1$Y
+endx1 <- df1$endX
+endy1 <- df1$endY
+
 df2 <- df[["2"]]
 df2 <- df2 %>%
   mutate(X = mean(location.x)) %>%
@@ -181,12 +188,22 @@ df2 <- df2 %>%
   mutate(endX = mean(pass.end_location.x)) %>%
   mutate(endY = mean(pass.end_location.y))
 
+x2 <- df2$X
+y2 <- df2$Y
+endx2 <- df2$endX
+endy2 <- df2$endY
+
 df3 <- df[["3"]]
 df3 <- df3 %>%
   mutate(X = mean(location.x)) %>%
   mutate(Y = mean(location.y)) %>%
   mutate(endX = mean(pass.end_location.x)) %>%
   mutate(endY = mean(pass.end_location.y))
+
+x3 <- df3$X
+y3 <- df3$Y
+endx3 <- df3$endX
+endy3 <- df3$endY
 
 custom_theme <- function(){
   theme(plot.background = element_rect(colour = "#0D0D0D", fill = "#0D0D0D"),
@@ -203,33 +220,27 @@ figure <- ggplot() +
   geom_segment(data = df[["1"]], aes(x = location.x, y = location.y,
                                      xend = pass.end_location.x, yend = pass.end_location.y,
                                      colour = "#fec44f"),
-               lineend = "butt", size = 0.5, alpha = 0.05, arrow =
+               lineend = "butt", size = 0.5, alpha = 0.08, arrow =
                  arrow(length = unit(0.04, "inches"), ends = "last", type = "open")) +
-  geom_segment(data = df1, aes(x = X, y = Y,
-                               xend = endX, yend = endY,
-                               colour = "#fec44f"),
-               lineend = "butt", size = 2, alpha = 1, arrow =
-                 arrow(length = unit(0.05, "inches"), ends = "last", type = "closed")) +
+  annotate("segment", x = x1, y = y1, 
+           xend = endx1, yend = endy1, 
+           colour = "#2171b5", size = 2, arrow = arrow()) +
   geom_segment(data = df[["2"]], aes(x = location.x, y = location.y,
                                      xend = pass.end_location.x, yend = pass.end_location.y,
                                      colour = "#41ab5d"),
-               lineend = "butt", size = 0.5, alpha = 0.05, arrow =
+               lineend = "butt", size = 0.5, alpha = 0.08, arrow =
                  arrow(length = unit(0.04, "inches"), ends = "last", type = "open")) +
-  geom_segment(data = df2, aes(x = X, y = Y,
-                               xend = endX, yend = endY,
-                               colour = "#41ab5d"),
-               lineend = "butt", size = 2, alpha = 1, arrow =
-                 arrow(length = unit(0.05, "inches"), ends = "last", type = "closed")) +
+  annotate("segment", x = x2, y = y2, 
+           xend = endx2, yend = endy2, 
+           colour = "#41ab5d", size = 2, arrow = arrow()) +
   geom_segment(data = df[["3"]], aes(x = location.x, y = location.y,
                                      xend = pass.end_location.x, yend = pass.end_location.y,
                                      colour = "#2171b5"),
-               lineend = "butt", size = 0.5, alpha = 0.05, arrow =
+               lineend = "butt", size = 0.5, alpha = 0.08, arrow =
                  arrow(length = unit(0.04, "inches"), ends = "last", type = "open")) +
-  geom_segment(data = df3, aes(x = X, y = Y,
-                               xend = endX, yend = endY,
-                               colour = "#2171b5"),
-               lineend = "butt", size = 2, alpha = 1, show.legend = TRUE, arrow =
-                 arrow(length = unit(0.05, "inches"), ends = "last", type = "closed")) +
+  annotate("segment", x = x3, y = y3, 
+           xend = endx3, yend = endy3, 
+           colour = "#fec44f", size = 2, arrow = arrow()) +
   scale_colour_manual(values = c("#fec44f", "#41ab5d", "#2171b5")) +
   labs(title = "Chloe Kelly - Top 3 Progressive Pass Clusters",
        subtitle = "WSL Games [2020/21]",
